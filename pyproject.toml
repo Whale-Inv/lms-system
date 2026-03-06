@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "lms-system"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+django = "^6.0.3"
+psycopg2-binary = "^2.9.11"
+pillow = "^12.1.1"
+djangorestframework = "^3.16.1"
+python-dotenv = "^1.2.2"
+
+
+[tool.poetry.group.linters.dependencies]
+mypy = "^1.19.1"
+isort = "^8.0.1"
+black = "^26.1.0"
+flake8 = "^7.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
