@@ -12,6 +12,7 @@ psycopg2-binary = "^2.9.11"
 pillow = "^12.1.1"
 djangorestframework = "^3.16.1"
 python-dotenv = "^1.2.2"
+django-filter = "^25.2"
 
 
 [tool.poetry.group.linters.dependencies]
