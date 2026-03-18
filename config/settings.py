@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
     "rest_framework",
     "django_filters",
+    "rest_framework_simplejwt",
 
     "users",
     "lms",
@@ -121,3 +122,13 @@ STATICFILES_DIRS = (BASE_DIR / "static",)
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT =BASE_DIR / "media"
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
