@@ -1,8 +1,12 @@
-from rest_framework import viewsets, generics
-from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework import viewsets, status
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView, \
+    get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from lms.models import Course, Lesson
+from lms.models import Course, Lesson, Subscription
+from lms.paginators import LessonPaginator, CoursePaginator
 from lms.serializers import CourseSerializer, LessonSerializer
 from users.permissions import IsModerator, IsOwner
 
@@ -10,6 +14,7 @@ from users.permissions import IsModerator, IsOwner
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
+    pagination_class = CoursePaginator
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -37,6 +42,7 @@ class LessonListAPIView(ListAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
     permission_classes = (IsOwner | IsModerator, IsAuthenticated)
+    pagination_class = LessonPaginator
 
 
 class LessonRetrieveAPIView(RetrieveAPIView):
@@ -53,4 +59,39 @@ class LessonUpdateAPIView(UpdateAPIView):
 
 class LessonDestroyAPIView(DestroyAPIView):
     queryset = Lesson.objects.all()
-    permission_classes = (~IsModerator, IsOwner, IsAuthenticated)
+    permission_classes = (IsOwner, IsAuthenticated)
+
+
+class SubscriptionAPIView(APIView):
+    """
+        Управление подписками на курс
+    """
+    def post(self, request, *args, **kwargs):
+        # Получаем пользователя
+        user = request.user
+
+        # Получаем course_id
+        course_id = request.data.get('course_id')
+
+        # Получаем объект курса или возвращаем 404
+        course_item = get_object_or_404(Course, id=course_id)
+
+        # Получаем объекты подписок по текущему пользователю и курсу
+        subs_item = Subscription.objects.filter(user=user, course=course_item)
+
+        # Если подписка у пользователя на этот курс есть - удаляем ее
+        if subs_item.exists():
+            subs_item.delete()
+            message = 'Подписка удалена'
+            status_code = status.HTTP_200_OK
+        # Если подписки у пользователя на этот курс нет - создаем ее
+        else:
+            Subscription.objects.create(user=user, course=course_item)
+            message = 'Подписка добавлена'
+            status_code = status.HTTP_201_CREATED
+
+        # Возвращаем ответ в API
+        return Response(
+            {"message": message, "course_id": course_id},
+            status=status_code
+        )
