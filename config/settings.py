@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 from django.conf.global_settings import AUTH_USER_MODEL, STATICFILES_DIRS, MEDIA_URL, MEDIA_ROOT
@@ -32,6 +34,7 @@ INSTALLED_APPS = [
     "django_filters",
     "rest_framework_simplejwt",
     "drf_yasg",
+    "django_celery_beat",
 
     "users",
     "lms",
@@ -137,3 +140,29 @@ REST_FRAMEWORK = {
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 
 SITE_URL = os.getenv("SITE_URL")
+
+
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
+CELERY_TIMEZONE = "Europe/Samara"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = os.getenv('REDIS_PORT')
+REDIS_DB = os.getenv('REDIS_DB')
+
+REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'noreply@localhost'
+
+
+CELERY_BEAT_SCHEDULE = {
+    'user_last_login': {
+        'task': 'users.tasks.user_last_login',
+        'schedule': crontab(hour=10, minute=0, day_of_week=1),
+    },
+}
