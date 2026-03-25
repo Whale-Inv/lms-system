@@ -27,21 +27,110 @@ class User(AbstractUser):
 
 
 class Payments(models.Model):
-    METHOD_CHOICES = [('cash', 'наличные'), ('transfer', 'перевод на счет'),]
+    METHOD_CHOICES = [
+        ('cash', 'наличные'),
+        ('transfer', 'перевод на счет'),
+        ('stripe', 'Stripe'),
+    ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payments", verbose_name="пользователь")
-    payment_date = models.DateTimeField(verbose_name="дата оплаты", auto_now_add=True)
-    paid_course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="payments_course", verbose_name="оплаченный курс", blank=True, null=True)
-    paid_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="payments_lesson", verbose_name="оплаченный урок", blank=True, null=True)
-    payment_amount = models.DecimalField(verbose_name="сумма оплаты", max_digits=10, decimal_places=2)
-    payment_method = models.CharField(max_length=50, choices=METHOD_CHOICES, default='transfer')
+    STATUS_CHOICES = [
+        ('pending', 'Ожидает оплаты'),
+        ('succeeded', 'Успешно оплачен'),
+        ('canceled', 'Отменен'),
+        ('failed', 'Ошибка'),
+        ('refunded', 'Возвращен'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="payments",
+        verbose_name="пользователь"
+    )
+    payment_date = models.DateTimeField(
+        verbose_name="дата оплаты",
+        auto_now_add=True
+    )
+    paid_course = models.ForeignKey(
+        Course, on_delete=models.CASCADE,
+        related_name="payments_course",
+        verbose_name="оплаченный курс",
+        blank=True,
+        null=True
+    )
+    paid_lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name="payments_lesson",
+        verbose_name="оплаченный урок",
+        blank=True,
+        null=True
+    )
+    payment_amount = models.DecimalField(
+        verbose_name="сумма оплаты",
+        max_digits=10,
+        decimal_places=2
+    )
+    payment_method = models.CharField(
+        max_length=50,
+        choices=METHOD_CHOICES,
+        default='transfer'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name="статус платежа"
+    )
+
+    stripe_product_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="ID продукта в Stripe"
+    )
+
+    stripe_price_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="ID цены в Stripe"
+    )
+
+    stripe_session_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="ID сессии в Stripe"
+    )
+
+    stripe_checkout_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="ссылка на оплату Stripe"
+    )
+
+    stripe_payment_intent_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="ID PaymentIntent в Stripe"
+    )
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="дополнительные данные"
+    )
 
     class Meta:
         verbose_name = 'платеж'
         verbose_name_plural = 'платежи'
 
     def __str__(self):
-        return f'{self.user} - {self.payment_amount}'
+        item = self.paid_course or self.paid_lesson
+        return f'{self.user.email} - {item} - {self.payment_amount} '
 
     def clean(self):
         """Проверка, что указан либо курс, либо урок, но не оба и не ни одного"""
@@ -53,3 +142,20 @@ class Payments(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+    @property
+    def product_name(self):
+        """ Название товара для Stripe """
+        item = self.paid_course or self.paid_lesson
+        return item.name
+
+    @property
+    def product_description(self):
+        """ Описание товара для Stripe """
+        item = self.paid_course or self.paid_lesson
+        return item.description
+
+    @property
+    def is_paid(self):
+        """ Проверка, оплачен ли платеж """
+        return self.status == 'succeeded'
