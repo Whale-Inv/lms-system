@@ -9,6 +9,7 @@ from lms.models import Course, Lesson, Subscription
 from lms.paginators import LessonPaginator, CoursePaginator
 from lms.serializers import CourseSerializer, LessonSerializer
 from users.permissions import IsModerator, IsOwner
+from lms.tasks import send_course_update_notifications
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -18,6 +19,30 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        """
+            Полное обновление курса
+        """
+        response = super().update(request, *args, **kwargs)
+
+        # Если обновление прошло успешно - запускаем рассылку
+        if response.status_code == status.HTTP_200_OK:
+            send_course_update_notifications.delay()
+
+        return response
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+            Частичное обновление курса
+        """
+        response = super().partial_update(request, *args, **kwargs)
+
+        # Если обновление прошло успешно - запускаем рассылку
+        if response.status_code == status.HTTP_200_OK:
+            send_course_update_notifications.delay()
+
+        return response
 
     def get_permissions(self):
         if self.action == "create":
