@@ -10,6 +10,10 @@ class Course(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="автор", default=4)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="цена")
 
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="дата обновления")
+    last_notification_sent = models.DateTimeField(verbose_name="дата отправки последнего уведомления", null=True, blank=True)
+
     def __str__(self):
         return f"курс: {self.name}"
 
@@ -26,6 +30,9 @@ class Lesson(models.Model):
     course = models.ForeignKey(Course, related_name="lessons", on_delete=models.CASCADE, verbose_name="курс")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="автор", default=4)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="цена")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="дата обновления")
 
     def __str__(self):
         return f"урок {self.name}"
