@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
 
+import dj_database_url
 from celery.schedules import crontab
 from dotenv import load_dotenv
 
 from django.conf.global_settings import AUTH_USER_MODEL, STATICFILES_DIRS, MEDIA_URL, MEDIA_ROOT
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -73,15 +75,25 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("ENGINE"),
-        "NAME": os.getenv("NAME"),
-        "USER": os.getenv("USER"),
-        "PASSWORD": os.getenv("PASSWORD"),
-
+if os.getenv('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=False
+        )
     }
-}
+else:
+    # Fallback для локального запуска
+    DATABASES = {
+        "default": {
+            "ENGINE": os.getenv("ENGINE", "django.db.backends.postgresql"),
+            "NAME": os.getenv("POSTGRES_DB"),
+            "USER": os.getenv("POSTGRES_USER"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+            "HOST": os.getenv("HOST"),
+            "PORT": os.getenv("PORT"),
+        }
+    }
 
 
 # Password validation
@@ -119,13 +131,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = (BASE_DIR / "static",)
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 AUTH_USER_MODEL = "users.User"
 
-STATICFILES_DIRS = (BASE_DIR / "static",)
-
 MEDIA_URL = "/media/"
-MEDIA_ROOT =BASE_DIR / "media"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 REST_FRAMEWORK = {
