@@ -9,7 +9,7 @@ from django.conf import settings
 
 
 def should_send_notification(course):
-    """ Проверяет, нужно ли отправлять уведомление """
+    """Проверяет, нужно ли отправлять уведомление"""
     now = timezone.now()
     four_hours_ago = now - timedelta(hours=4)
 
@@ -23,7 +23,7 @@ def should_send_notification(course):
 
 @shared_task
 def send_update_email(user_email, course_name, course_id):
-    """ Отправка письма пользователю """
+    """Отправка письма пользователю"""
     subject = f"Обновление курса: {course_name}"
     message = f"""Здравствуйте!
 
@@ -45,15 +45,14 @@ def send_update_email(user_email, course_name, course_id):
 
 @shared_task
 def send_course_update_notifications():
-    """ Асинхронная рассылка уведомлений об обновлении курсов """
+    """Асинхронная рассылка уведомлений об обновлении курсов"""
 
     now = timezone.now()
     four_hours_ago = now - timedelta(hours=4)
 
     # Находим курсы, которые обновлялись больше 4 часов назад и в них есть подписчики
     courses = Course.objects.filter(
-        updated_at__lte=four_hours_ago,
-        subscribers__isnull=False
+        updated_at__lte=four_hours_ago, subscribers__isnull=False
     ).distinct()
 
     for course in courses:
@@ -65,7 +64,7 @@ def send_course_update_notifications():
                 send_update_email.delay(
                     user_email=subscription.user.email,
                     course_name=course.name,
-                    course_id=course.id
+                    course_id=course.id,
                 )
 
             # После отправки обновляем время

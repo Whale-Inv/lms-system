@@ -1,6 +1,12 @@
 from rest_framework import viewsets, status
-from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView, \
-    get_object_or_404
+from rest_framework.generics import (
+    CreateAPIView,
+    ListAPIView,
+    RetrieveAPIView,
+    UpdateAPIView,
+    DestroyAPIView,
+    get_object_or_404,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,7 +28,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """
-            Полное обновление курса
+        Полное обновление курса
         """
         response = super().update(request, *args, **kwargs)
 
@@ -34,7 +40,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         """
-            Частичное обновление курса
+        Частичное обновление курса
         """
         response = super().partial_update(request, *args, **kwargs)
 
@@ -52,7 +58,6 @@ class CourseViewSet(viewsets.ModelViewSet):
         elif self.action == "destroy":
             self.permission_classes = (IsOwner, ~IsModerator, IsAuthenticated)
         return super().get_permissions()
-
 
 
 class LessonCreateAPIView(CreateAPIView):
@@ -89,14 +94,15 @@ class LessonDestroyAPIView(DestroyAPIView):
 
 class SubscriptionAPIView(APIView):
     """
-        Управление подписками на курс
+    Управление подписками на курс
     """
+
     def post(self, request, *args, **kwargs):
         # Получаем пользователя
         user = request.user
 
         # Получаем course_id
-        course_id = request.data.get('course_id')
+        course_id = request.data.get("course_id")
 
         # Получаем объект курса или возвращаем 404
         course_item = get_object_or_404(Course, id=course_id)
@@ -107,16 +113,15 @@ class SubscriptionAPIView(APIView):
         # Если подписка у пользователя на этот курс есть - удаляем ее
         if subs_item.exists():
             subs_item.delete()
-            message = 'Подписка удалена'
+            message = "Подписка удалена"
             status_code = status.HTTP_200_OK
         # Если подписки у пользователя на этот курс нет - создаем ее
         else:
             Subscription.objects.create(user=user, course=course_item)
-            message = 'Подписка добавлена'
+            message = "Подписка добавлена"
             status_code = status.HTTP_201_CREATED
 
         # Возвращаем ответ в API
         return Response(
-            {"message": message, "course_id": course_id},
-            status=status_code
+            {"message": message, "course_id": course_id}, status=status_code
         )

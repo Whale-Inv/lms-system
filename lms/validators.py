@@ -11,9 +11,9 @@ class LinkValidator:
     def __call__(self, value):
 
         reg = re.compile(
-            r'^https?://(www\.)?(youtube\.com|youtu\.be)/'
-            r'(watch\?v=|embed/)?([a-zA-Z0-9_-]{11})'
-            r'(&.*)?$'
+            r"^https?://(www\.)?(youtube\.com|youtu\.be)/"
+            r"(watch\?v=|embed/)?([a-zA-Z0-9_-]{11})"
+            r"(&.*)?$"
         )
         tmp_val = dict(value).get(self.field)
         if not bool(reg.match(tmp_val)):
