@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+ARG SECRET_KEY=dummy-key-for-build
+
+ENV SECRET_KEY=$SECRET_KEY
+
 # Устанавливаем системные зависимости для PostgreSQL и Poetry
 RUN apt-get update && apt-get install -y \
     gcc \
