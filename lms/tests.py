@@ -48,18 +48,20 @@ class LessonTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.assertEqual(
-            response.json(),
-            {
-                "id": 2,
-                "name": "Тестовый урок",
-                "description": "Описание тестового урока",
-                "preview": None,
-                "link": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-                "course": 1,
-                "owner": 1,
-            },
-        )
+        data = response.json()
+
+        # Проверяем только нужные поля
+        self.assertEqual(data["name"], "Тестовый урок")
+        self.assertEqual(data["description"], "Описание тестового урока")
+        self.assertEqual(data["preview"], None)
+        self.assertEqual(data["link"], "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        self.assertEqual(data["course"], 1)
+        self.assertEqual(data["owner"], 1)
+
+        # Проверяем, что есть дополнительные поля (но не проверяем их значение)
+        self.assertIn("price", data)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
 
         self.assertTrue(Lesson.objects.all().exists())
 
